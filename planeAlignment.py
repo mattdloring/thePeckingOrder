@@ -2,7 +2,7 @@ import logging
 
 import numpy as np
 
-from skimage.filters import threshold_otsu
+from thePeckingOrder.filters import threshold_otsu
 
 logging.basicConfig(level=logging.DEBUG)  # NOTSET, DEBUG, INFO, WARNING
 
@@ -27,7 +27,7 @@ class PlaneAlignment:
             accuracy = self.calculate_similarity(target_image, q)
             logging.debug(f'image {n} is {accuracy} accurate')
             self.match_vals.append(accuracy)
-        # return np.where(accs == np.max(accs))[0][0]
+        return np.where(self.match_vals == np.max(self.match_vals))[0][0]
 
     @staticmethod
     def calculate_similarity(pred, true, k=1):

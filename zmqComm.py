@@ -1,64 +1,175 @@
 import zmq
 import logging
+import json
+import time
 
 import threading as tr
+import numpy as np
 
 from datetime import datetime as dt
+
+from thePeckingOrder.filters import threshold_otsu
 
 logging.basicConfig(level=logging.DEBUG)  # NOTSET, DEBUG, INFO, WARNING
 
 
 class WalkyTalky:
-    def __init__(self, outputPort, inputIP, inputPort, savePath=None, subTopic=""):
-        """
-        generic back & forth communication with LabVIEW
-
-        :param ip:
-        :param outputPort: port to send messages to labivew
-        :param inputPort: port to input images from labview
-        :param savePath:
-        """
-        self.sub = Subscriber(port=inputPort, topic=subTopic, ip=inputIP)
+    def __init__(self, outputPort, inputIP, inputPort):
+        self.sub = Subscriber(port=inputPort, ip=inputIP)
         self.pub = Publisher(port=outputPort)
-        self.savePath = savePath
 
         self.running = True
 
-        self.messages = []
+        self.images = []
         self.timestamps = []
+
         self.msg_receiving_thread = tr.Thread(target=self.msg_receiver)
+        self.msg_receiving_thread.start()
 
     def msg_receiver(self):
         while self.running:
             data = self.sub.socket.recv()
-            self.save(data)
-            self.messages.append(data)
-            self.timestamps.append(dt.now())
-            logging.debug(f'{dt.now()} received {data}')
+            msg_parts = [part.strip() for part in data.split(b': ', 1)]
+            # tag = msg_parts[0].split(b' ')[0]
+            dateString = str(msg_parts[0]).split(' ')[2]
+            timestamp = dt.strptime(dateString, "%H:%M:%S.%f").time()
+            array = np.array(json.loads(msg_parts[1]))[:,
+                    32:]  # assuming the following message structure: 'tag: message'
 
-    def save(self, data):
-        if self.savePath is not None:
-            if "saveStream" not in vars(self):
-                self.saveStream = self.init_saving(self.savePath)
-            self.saveStream.write(f"{dt.now()}_{data}")
-            self.saveStream.write("\n")
-            self.saveStream.flush()
+            # logging.info(f'{dt.now()} received data')
 
-    @staticmethod
-    def init_saving(file_path):
-        import os
-        val_offset = 0
-        newpath = file_path
-        while os.path.exists(newpath):
-            val_offset += 1
-            newpath = file_path[:file_path.rfind('/') + 1] + file_path[
-                                                             file_path.rfind('/') + 1:][:-4] \
-                      + '_' + str(val_offset) + '.txt'
+            self.images.append(array)
+            self.timestamps.append(timestamp)
 
-        logging.info(f"{dt.now()} Saving data to {file_path}")
-        filestream = open(file_path, "a")
-        filestream.write(f"{dt.now()} \n")
-        return filestream
+    def make_current(self):
+        relTimer = dt.now().time()
+        self.clip_from_t(relTimer)
+
+    def clip_from_t(self, t):
+
+        if self.timestamps[-1] < t:
+            self.timestamps = []
+            self.images = []
+            return
+
+        for n, time in enumerate(self.timestamps):
+            if time < t:
+                pass
+            else:
+                break
+        self.timestamps = self.timestamps[n:]
+        self.images = self.images[n:]
+
+    def move_piezo_n(self, n):
+        # move n down
+        if n > 0:
+            self.pub.socket.send(f'(pplus){n * 2}'.encode())
+        else:
+            self.pub.socket.send(f'(pminus){abs(n) * 2}'.encode())
+
+        time.sleep(0.2)
+        self.pub.socket.send(b"RUN")
+        time.sleep(1)
+        self.pub.socket.send(b"RESET")
+
+    def gather_stack(self, spacing, reps):
+        # hard coded atm for a 5-stack, 5um steps. reps flexible
+        # stop scanning
+        self.pub.socket.send(b"s4")
+        self.pub.socket.send(b"RUN")
+
+        time.sleep(1)
+        self.pub.socket.send(b"RESET")
+        time.sleep(1)
+
+        # clear stack
+        try:
+            self.make_current()
+        except IndexError:
+            pass # here if already empty
+
+        # get target plane
+        self.pub.socket.send(f'p0 s2 "500 (s3 s5? "20){reps} p1'.encode())
+        self.pub.socket.send(b"RUN")
+
+        while len(self.timestamps) <= reps - 1:
+            pass
+
+        target = np.median(self.images, axis=0)
+        self.make_current()
+
+        stackAbove = []
+
+        # GET ONE ABOVE
+        self.pub.socket.send(b"RESET")
+        time.sleep(1)
+        self.move_piezo_n(spacing)
+        time.sleep(1)
+        self.pub.socket.send(f'(s3 s5? "20){reps}'.encode())
+        self.pub.socket.send(b"RUN")
+        while len(self.timestamps) <= reps - 1:
+            pass
+        someImage = np.median(self.images, axis=0)
+        stackAbove.append(someImage)
+        self.make_current()
+
+        # GET SECOND ABOVE
+        self.pub.socket.send(b"RESET")
+        time.sleep(1)
+        self.move_piezo_n(spacing)
+        time.sleep(1)
+        self.pub.socket.send(f'(s3 s5? "20){reps}'.encode())
+        self.pub.socket.send(b"RUN")
+        while len(self.timestamps) <= reps - 1:
+            pass
+        someImage = np.median(self.images, axis=0)
+        stackAbove.append(someImage)
+        self.make_current()
+
+        # GET FIRST BELOW
+        stackBelow = []
+        self.pub.socket.send(b"RESET")
+
+        time.sleep(1)
+        self.move_piezo_n(-spacing*3)
+        time.sleep(1)
+
+        self.pub.socket.send(f'(s3 s5? "20){reps}'.encode())
+        self.pub.socket.send(b"RUN")
+        while len(self.timestamps) <= reps - 1:
+            pass
+        someImage = np.median(self.images, axis=0)
+        stackBelow.append(someImage)
+        self.make_current()
+        # GET SECOND BELOW
+        stackBelow = []
+        self.pub.socket.send(b"RESET")
+        time.sleep(1)
+        self.move_piezo_n(-spacing)
+        time.sleep(1)
+        self.pub.socket.send(f'(s3 s5? "20){reps}'.encode())
+        self.pub.socket.send(b"RUN")
+        while len(self.timestamps) <= reps - 1:
+            pass
+        someImage = np.median(self.images, axis=0)
+        stackBelow.append(someImage)
+        self.make_current()
+
+        time.sleep(1)
+
+        self.pub.socket.send(b"RESET")
+        time.sleep(1)
+
+        offsetBack = spacing*2*2
+        self.pub.socket.send(f"(pplus){offsetBack} s1 s3".encode())
+        self.pub.socket.send(b"RUN")
+
+        time.sleep(1)
+        self.pub.socket.send(b"RESET")
+        time.sleep(1)
+
+        finalStack = [stackBelow[-1], stackBelow[0], target, stackAbove[0], stackAbove[-1]]
+        return finalStack
 
 
 class Subscriber:
@@ -99,5 +210,5 @@ class Publisher:
         logging.info(f"{dt.now()} Publisher initialized on {'tcp://localhost:' + str(self.port)}")
 
     def kill(self):
-            self.socket.close()
-            self.context.term()
+        self.socket.close()
+        self.context.term()
