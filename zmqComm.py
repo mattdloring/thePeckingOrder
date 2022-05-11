@@ -142,7 +142,6 @@ class WalkyTalky:
         stackBelow.append(someImage)
         self.make_current()
         # GET SECOND BELOW
-        stackBelow = []
         self.pub.socket.send(b"RESET")
         time.sleep(1)
         self.move_piezo_n(-spacing)
