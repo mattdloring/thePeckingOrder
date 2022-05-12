@@ -11,6 +11,7 @@ import threading as tr
 import numpy as np
 
 from thePeckingOrder import planeAlignment, zmqComm
+from datetime import datetime as dt
 
 
 class Karen:
@@ -65,15 +66,16 @@ class Karen:
 
     def acquireTarget(self):
         self.wt.make_current()
-        logging.info('acquiring target plane')
+        logging.info(f'{dt.now()} acquiring target plane')
         while len(self.wt.images) <= 15:
             pass
         self.targetAcquired = True
         self.targetImage = np.median(self.wt.images)
-        logging.info('target plane acquired')
+        logging.info(f'{dt.now()} target plane acquired')
         return
 
     def startVolumeScanning(self):
+        logging.info(f'{dt.now()} began volume scanning')
         self.wt.pub.socket.send(f's4 s2 p0 "1000 (p1 "20 (s3 s5? p3 "20){self.nPlanes})5000'.encode()) # n planes and arb high number for reps
         self.wt.pub.socket.send(b"RUN")
         self.volumeScanning = True
@@ -81,7 +83,7 @@ class Karen:
     def runAlignment(self):
         self.aligning = True
         self.volumeScanning = False
-        logging.info('beginning alignment...')
+        logging.info(f'{dt.now()} beginning alignment...')
         self.resetToTarget()
         compStack = self.wt.gather_stack(spacing=self.alignmentParams['step'], reps=self.alignmentParams['reps'])
         pa = planeAlignment.PlaneAlignment(target=self.targetImage, stack=compStack, method='otsu')
@@ -89,7 +91,7 @@ class Karen:
         moveAmount = self.alignmentMoveDictionary[myMatch]
         if moveAmount != 0:
             self.wt.move_piezo_n(moveAmount)
-        logging.info(f'alignment: status: completed with {moveAmount} movement')
+        logging.info(f'{dt.now()} alignment: status: completed with {moveAmount} movement')
         self.last_aligned_time = time.time()
         self.aligning = False
 
