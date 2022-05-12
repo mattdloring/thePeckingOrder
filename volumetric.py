@@ -69,7 +69,7 @@ class Karen:
         while len(self.wt.images) <= 15:
             pass
         self.targetAcquired = True
-        self.targetImage = np.median(self.wt.images)
+        self.targetImage = np.median(self.wt.images, axis=0)
         logging.info(f'{dt.now()} target plane acquired')
         return
 
