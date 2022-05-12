@@ -94,20 +94,19 @@ class Karen:
         self.aligning = False
 
     def mainLoop(self):
-        try:
-            while self.running:
-                if not self.targetAcquired:
-                    pass
-                elif time.time() - self.lastAlignedTime >= self.alignTimeThresh:
-                    self.runAlignment()
-                else:
-                    if not self.volumeScanning and not self.aligning:
-                        self.startVolumeScanning()
-                        time.sleep(1)
-        except KeyboardInterrupt:
-            print("Boss Slain")
-            self.running = False
-            sys.exit()
+        while self.running:
+            if not self.targetAcquired:
+                pass
+            elif time.time() - self.lastAlignedTime >= self.alignTimeThresh:
+                self.runAlignment()
+            else:
+                if not self.volumeScanning and not self.aligning:
+                    self.startVolumeScanning()
+                    time.sleep(1)
+            if KeyboardInterrupt:
+                print("Boss Slain")
+                self.running = False
+                sys.exit()
 
 
 if __name__ == '__main__':
@@ -116,7 +115,6 @@ if __name__ == '__main__':
     parser.add_argument('--align_t', type=int, default=450)
 
     args = parser.parse_args()
-    print(f'plane = {args.nplanes}')
 
     myWalky = zmqComm.WalkyTalky(outputPort='5005', inputIP='tcp://10.122.170.21:', inputPort=4701)
     Karen(walky_talky=myWalky, nplanes=args.nplanes, alignThreshold=args.align_t)
