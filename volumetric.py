@@ -103,10 +103,6 @@ class Karen:
                 if not self.volumeScanning and not self.aligning:
                     self.startVolumeScanning()
                     time.sleep(1)
-            if KeyboardInterrupt:
-                print("Boss Slain")
-                self.running = False
-                sys.exit()
 
 
 if __name__ == '__main__':
