@@ -74,7 +74,7 @@ class Karen:
         return
 
     def startVolumeScanning(self):
-        self.wt.pub.socket.send(f's4 s2 p0 "1000 (p1 "20 (s3 s5? p3 "20){self.nPlanes})5000') # n planes and arb high number for reps
+        self.wt.pub.socket.send(f's4 s2 p0 "1000 (p1 "20 (s3 s5? p3 "20){self.nPlanes})5000'.encode()) # n planes and arb high number for reps
         self.wt.pub.socket.send(b"RUN")
         self.volumeScanning = True
 
