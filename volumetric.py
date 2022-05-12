@@ -31,6 +31,9 @@ class Karen:
         self.volumeScanning = False
         self.targetImage = None
         self.aligning = False
+
+        self.moveOffsets = 0
+
         self.alignmentParams = {'step': 3, 'reps': 5}
         self.lastAlignedTime = time.time()
         self.alignmentMoveDictionary = {0: -self.alignmentParams['step']*2,
@@ -90,8 +93,9 @@ class Karen:
         moveAmount = self.alignmentMoveDictionary[myMatch]
         if moveAmount != 0:
             self.wt.move_piezo_n(moveAmount)
+
         logging.info(f'{dt.now()} alignment: status: completed with {moveAmount} movement')
-        self.last_aligned_time = time.time()
+        self.lastAlignedTime = time.time()
         self.aligning = False
 
     def mainLoop(self):
