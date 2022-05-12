@@ -5,7 +5,6 @@ basic volumetric functionality with plane alignment
 import argparse
 import logging
 import time
-import sys
 
 import threading as tr
 import numpy as np
@@ -115,4 +114,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     myWalky = zmqComm.WalkyTalky(outputPort='5005', inputIP='tcp://10.122.170.21:', inputPort=4701)
+
+    # she doesnt have a start method and doesnt play nice with others, once you start her shes goes going
     Karen(walky_talky=myWalky, nplanes=args.nplanes, alignThreshold=args.align_t)
