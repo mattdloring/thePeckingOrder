@@ -2,6 +2,7 @@ import zmq
 import logging
 import json
 import time
+import sys
 
 import threading as tr
 import numpy as np
@@ -25,6 +26,10 @@ class WalkyTalky:
 
         self.msg_receiving_thread = tr.Thread(target=self.msg_receiver)
         self.msg_receiving_thread.start()
+
+    def kill(self):
+        self.running = False
+        sys.exit()
 
     def msg_receiver(self):
         while self.running:

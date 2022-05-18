@@ -29,6 +29,12 @@ class PlaneAlignment:
             self.match_vals.append(accuracy)
         return np.where(self.match_vals == np.max(self.match_vals))[0][0]
 
+    def lossReturn(self):
+        binary_img = self.image_stack >= self.binarize_method(self.image_stack)
+        target_image = self.target_image >= self.binarize_method(self.target_image)
+        return self.calculate_similarity(target_image, binary_img)
+
+
     @staticmethod
     def calculate_similarity(pred, true, k=1):
         # only works on binarized inputs
