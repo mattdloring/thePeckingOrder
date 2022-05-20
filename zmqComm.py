@@ -9,7 +9,6 @@ import numpy as np
 
 from datetime import datetime as dt
 
-from thePeckingOrder.filters import threshold_otsu
 
 logging.basicConfig(level=logging.DEBUG)  # NOTSET, DEBUG, INFO, WARNING
 
@@ -29,6 +28,16 @@ class WalkyTalky:
 
     def kill(self):
         self.running = False
+        try:
+            self.msg_receiving_thread.terminate()
+        except:
+            pass
+
+        try:
+            self.msg_receiving_thread.join()
+        except:
+            pass
+        print('wt killed')
         sys.exit()
 
     def msg_receiver(self):
@@ -176,6 +185,7 @@ class WalkyTalky:
         return finalStack
 
 
+# pstim pub/subs
 class Subscriber:
     """
     Subscriber wrapper class for zmq.

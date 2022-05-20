@@ -29,6 +29,9 @@ class PlaneAlignment:
             self.match_vals.append(accuracy)
         return np.where(self.match_vals == np.max(self.match_vals))[0][0]
 
+    def match_val_returns(self):
+        return self.match_vals
+
     def lossReturn(self):
         binary_img = self.image_stack >= self.binarize_method(self.image_stack)
         target_image = self.target_image >= self.binarize_method(self.target_image)
