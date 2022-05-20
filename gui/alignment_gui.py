@@ -110,12 +110,15 @@ class PlaneAligner(QtWidgets.QMainWindow):
         if curr_l != self.img_lens and np.sum(self.displayImg) != 0:
             self.img_lens = curr_l
             self.n += 1
-            pa = planeAlignment.PlaneAlignment(self.wt.images[-1], self.displayImg, method='otsu')
-            loss = pa.lossReturn()
-            self.losses.append(loss)
-            self.planes_n.append(self.n)
-            self.graphWidget.plot(self.planes_n, self.losses)
-            # self.graphWidget.setYRange(0, 1, padding=0)
+            try:
+                pa = planeAlignment.PlaneAlignment(self.wt.images[-1], self.displayImg, method='otsu')
+                loss = pa.lossReturn()
+                self.losses.append(loss)
+                self.planes_n.append(self.n)
+                self.graphWidget.plot(self.planes_n, self.losses)
+                # self.graphWidget.setYRange(0, 1, padding=0)
+            except IndexError:
+                pass
 
     def update_image(self):
         n_frames = self.n_imgs.value()
