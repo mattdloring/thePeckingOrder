@@ -236,7 +236,7 @@ class PlaneAligner(QtWidgets.QMainWindow):
         self.compStack = self.wt.gather_stack(spacing=stepSize, reps=self.n_reps.value())
         pa = planeAlignment.PlaneAlignment(target=self.displayImg, stack=self.compStack, method='otsu')
         self.myMatch = pa.match_calculator()
-        moveAmount = self.alignmentMoveDictionary[self.myMatch]
+        moveAmount = someMovementDictionary[self.myMatch]
         if moveAmount != 0:
             self.wt.move_piezo_n(moveAmount)
         self.output(f'alignment: status: completed with {moveAmount} movement')
