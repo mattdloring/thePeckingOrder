@@ -86,7 +86,6 @@ class PlaneAligner(QtWidgets.QMainWindow):
         self.planeImgs = [pg.ImageView(parent=frame) for frame in framelist]
 
         self.aligntarget = pg.ImageView(parent=self.alignTargetFrame)
-        self.alignchoice = pg.ImageView(parent=self.alignChosenFrame)
 
         self.planeLabels = [self.plane0_val, self.plane1_val, self.plane2_val, self.plane3_val, self.plane4_val]
         [pval.setText(str(0)) for pval in self.planeLabels]
@@ -265,7 +264,6 @@ class PlaneAligner(QtWidgets.QMainWindow):
         [imgFrame.setImage(self.compStack[n], autoRange=False) for n, imgFrame in enumerate(self.planeImgs)]
         [pval.setText(str(self.matchVals[n])) for n, pval in enumerate(self.planeLabels)]
         self.aligntarget.setImage(self.displayImg)
-        self.alignchoice.setImage(self.compStack[self.myMatch])
 
     def output(self, msg, verbose=False):
         if not verbose:
