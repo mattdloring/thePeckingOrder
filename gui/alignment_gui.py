@@ -23,8 +23,9 @@ exit_event = tr.Event()
 
 
 class PlaneAligner(QtWidgets.QMainWindow):
-    def __init__(self, walkytalky, stimBuddyPorts):
-        super(PlaneAligner, self).__init__()
+    def __init__(self, walkytalky, stimBuddyPorts, *args, **kwargs):
+        super(PlaneAligner, self).__init__(*args, **kwargs)
+
         self.running = True
         self.locPath = os.path.dirname(os.path.realpath(__file__))
         self.UIpath = os.path.join(self.locPath, 'alignment_gui.ui')
@@ -93,8 +94,6 @@ class PlaneAligner(QtWidgets.QMainWindow):
         self.pstimPub = zmqComm.Publisher(stimBuddyPorts['wt_output'])
         self.pstimSub = zmqComm.Subscriber(stimBuddyPorts['wt_input'])
 
-        self.pstim_msg_thread = tr.Thread(target=self.pstim_msg_reception)
-        self.pstim_msg_thread.start()
 
     def update_live(self):
         try:
@@ -132,6 +131,7 @@ class PlaneAligner(QtWidgets.QMainWindow):
         self.flushTimer.stop()
         self.running = False
         self.runningSequences = False
+        pg.exit()
         try:
             self.wt.kill()
         except:
@@ -159,19 +159,19 @@ class PlaneAligner(QtWidgets.QMainWindow):
 
     def pstim_msg_reception(self):
         # this will trigger alignment running from msgs in pstim
-        while self.running:
-            topic = self.pstimSub.socket.recv_string()
-            msg = self.pstimSub.socket.recv_pyobj()
-            match topic:
-                case 'stimbuddy':
-                    match msg:
-                        case 'proceed':
-                            self.output('received pause confirmation from pstim', True)
-                            self.run_alignment(safe=True)
-                        case _:
-                            print(f'{msg}: message not understood')
-                case _:
-                    print(f'{topic}: topic not understood')
+        topic = self.pstimSub.socket.recv_string()
+        msg = self.pstimSub.socket.recv_pyobj()
+        print(f'we got a {topic} {msg}')
+        match topic:
+            case 'stimbuddy':
+                match msg:
+                    case 'proceed':
+                        self.output('received pause confirmation from pstim', True)
+                        self.run_alignment(safe=True)
+                    case _:
+                        print(f'{msg}: message not understood')
+            case _:
+                print(f'{topic}: topic not understood')
 
     def run_alignment_sequence(self):
         safetyMode = self.stimulusCheck.isChecked()
@@ -209,13 +209,17 @@ class PlaneAligner(QtWidgets.QMainWindow):
         try:
             self.alignmentSequencer_safe.stop()
         except:
+
             pass
+
 
     def askPstimForPermission(self):
         self.output('asked pstim to pause', True)
         # asks pstim to pause
         self.pstimPub.socket.send_string('alignment', zmq.SNDMORE)
         self.pstimPub.socket.send_pyobj("pause")
+
+        self.pstim_msg_reception()
 
     def thankPstim(self):
         self.output('asked pstim to unpause', True)
@@ -285,7 +289,7 @@ def run():
 
     wind = PlaneAligner(walkytalky=myWalky, stimBuddyPorts=alignment_ports)
     wind.show()
-    app.exec()
+    app.exec_()
 
 
 if __name__ == '__main__':
