@@ -77,15 +77,7 @@ class Protocol:
     def kill(self):
         self.running = False
 
-    # labview image receiver ?
-    @staticmethod
-    def img_receiver_external(socket):
-        msg = socket.recv()
-        msg_parts = [part.strip() for part in msg.split(b': ', 1)]
-        tag = msg_parts[0].split(b' ')[0]
-        # sendtime =  msg_parts[0].split(b' ')[2].decode()
-        array = np.array(json.loads(msg_parts[1]))[:, 32:]  # assuming the following message structure: 'tag: message'
-        return array, tag
+
 
     @staticmethod
     def divide_chunks(l, n):
