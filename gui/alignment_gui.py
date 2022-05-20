@@ -216,6 +216,7 @@ class PlaneAligner(QtWidgets.QMainWindow):
         # asks pstim to pause
         self.pstimPub.socket.send_string('alignment', zmq.SNDMORE)
         self.pstimPub.socket.send_pyobj("pause")
+
     def thankPstim(self):
         self.output('asked pstim to unpause', True)
         # resumes pstim
@@ -250,6 +251,7 @@ class PlaneAligner(QtWidgets.QMainWindow):
         if safe:
             self.thankPstim()
 
+        self.kill_timers()
         self.run_alignment_sequence()
 
         self.matchVals = pa.match_val_returns()
