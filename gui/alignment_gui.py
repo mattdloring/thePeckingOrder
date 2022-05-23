@@ -23,7 +23,7 @@ exit_event = tr.Event()
 
 
 class PlaneAligner(QtWidgets.QMainWindow):
-    def __init__(self, walkytalky, stimBuddyPorts, *args, **kwargs):
+    def __init__(self, walkytalky, stimBuddyPorts=None, *args, **kwargs):
         super(PlaneAligner, self).__init__(*args, **kwargs)
 
         self.running = True
@@ -90,8 +90,9 @@ class PlaneAligner(QtWidgets.QMainWindow):
         self.planeLabels = [self.plane0_val, self.plane1_val, self.plane2_val, self.plane3_val, self.plane4_val]
         [pval.setText(str(0)) for pval in self.planeLabels]
 
-        self.pstimPub = zmqComm.Publisher(stimBuddyPorts['wt_output'])
-        self.pstimSub = zmqComm.Subscriber(stimBuddyPorts['wt_input'])
+        if stimbuddyPorts:
+            self.pstimPub = zmqComm.Publisher(stimBuddyPorts['wt_output'])
+            self.pstimSub = zmqComm.Subscriber(stimBuddyPorts['wt_input'])
 
 
     def update_live(self):
