@@ -90,7 +90,7 @@ class PlaneAligner(QtWidgets.QMainWindow):
         self.planeLabels = [self.plane0_val, self.plane1_val, self.plane2_val, self.plane3_val, self.plane4_val]
         [pval.setText(str(0)) for pval in self.planeLabels]
 
-        if stimbuddyPorts:
+        if stimBuddyPorts:
             self.pstimPub = zmqComm.Publisher(stimBuddyPorts['wt_output'])
             self.pstimSub = zmqComm.Subscriber(stimBuddyPorts['wt_input'])
 
