@@ -249,6 +249,9 @@ class PlaneAligner(QtWidgets.QMainWindow):
             self.wt.move_piezo_n(moveAmount)
         self.output(f'alignment: status: completed with {moveAmount} movement')
 
+        self.pstimPub.socket.send_string('alignment', zmq.SNDMORE)
+        self.pstimPub.socket.send_pyobj(f"movementAmount_{moveAmount}")
+
         textOut = self.scanningParams.toPlainText()
         self.wt.pub.socket.send(textOut.encode())
         self.wt.pub.socket.send(b"RUN")
